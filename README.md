@@ -47,3 +47,18 @@ result.timedOut = [Task5]
 - Tasks must be returned in the order of their duration. It's guaranteed that when all tasks are started simultanoussly, each successful task will end in some distinct point in time and there should be no two tasks that finish at the same moment. Order of timed out tasks is not important.
 - When there is no hanging task, the program should return after a time not significantly longer than the duration of the longest running task. For example, when the longest running task takes 3 seconds to execute, it should return after 3 seconds + maybe some small additional time.
 - It is forbidden to use busy loops and `Thread.sleep`; all waits and blocks should be realized with proper methods.
+
+
+# Solution Description
+
+The concept of a worker is difficult to represent in vanilla scala beyond just limiting threads in the execution context when running a future. so I decided to use akka typed to simulate workers with actors.
+I was originally going to use a pool router but realised this would not work if some tasks could hang longer than the timeout. Any messages the hanging worker actor had queued would time out as well.
+Instead, I created a Pull leader/worker system that allowed workers to request work when free. This is not a fool-proof implementation and does allow for recovery if a worker goes down. However,
+it does work for the purposes of this exercise.
+Tests in MainSpec rely on timing and would not be suitable for production unit tests, however, they demonstrate that this solution covers all the requirements
+
+## Future improvements
+
+Make the Leader/Worker system more resilient
+I used the ask pattern with the mainActor as I wanted to be able to test the Main program without using the akka test kit. In a production environment this could be removed
+Actor structure is currently very flat. I would change it so that the Leader spawns the workers and potentially the Aggregator.
